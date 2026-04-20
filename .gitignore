@@ -1,0 +1,64 @@
+# Claude Code — NUNCA commitear
+.claude/
+CLAUDE.md
+CLAUDE.md.local
+.mcp.json
+
+# Documentos internos y material original de Toka (no publicar)
+PLAN_HotelStaffIA_Toka_Technical_Test.md
+Prueba_Tecnica_Desarrollador_Fullstack IA.pdf
+*.pdf
+
+# Entornos y secretos
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+.turbo/
+.parcel-cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Bases de datos / volúmenes locales
+*.sqlite
+*.sqlite3
+*.db
+/data/
+/postgres-data/
+/mongo-data/
+/qdrant-data/
+
+# SO / Editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

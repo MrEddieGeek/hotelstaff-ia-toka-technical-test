@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: hotelstaff
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports: ["5432:5432"]
+
+  mongodb:
+    image: mongo:7
+    ports: ["27017:27017"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    ports: ["5672:5672", "15672:15672"]
+
+  qdrant:
+    image: qdrant/qdrant
+    ports: ["6333:6333"]
+
+  auth-service:
+    build: ./services/auth
+    depends_on: [postgres]
+
+  user-service:
+    build: ./services/user
+    depends_on: [postgres, rabbitmq]
+
+  role-service:
+    build: ./services/role
+    depends_on: [postgres]
+
+  audit-service:
+    build: ./services/audit
+    depends_on: [mongodb, rabbitmq]
+
+  ia-agent:
+    build: ./services/ia-agent
+    depends_on: [qdrant, rabbitmq]
+
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+    depends_on: [auth-service, user-service]
