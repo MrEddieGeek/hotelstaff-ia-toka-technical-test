@@ -15,6 +15,7 @@ Prueba_Tecnica_Desarrollador_Fullstack IA.pdf
 .env.*.local
 *.pem
 *.key
+secrets/
 
 # Python
 __pycache__/

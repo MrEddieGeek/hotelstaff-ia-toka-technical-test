@@ -2,64 +2,92 @@
 
 **Autor:** Edgar Guzmán Enríquez (`@MrEddieGeek`)
 **Fecha:** Abril 2026
-**Estado:** En desarrollo activo
 
-Este repositorio es la entrega de la prueba técnica de Toka para el puesto de Senior Full-Stack Engineer con foco en IA. Cubre los 5 ejercicios solicitados y deja la base de un demo reutilizable como CRM de staff de hotel con agente IA integrado.
-
----
-
-## 📚 Documentos clave
-
-| Archivo | Propósito |
-|---|---|
-| [`repo-structure.md`](./repo-structure.md) | Estructura prevista del repositorio. |
-| [`docker-compose.yml`](./docker-compose.yml) | Orquestación local de todos los servicios e infraestructura. |
-| `docs/` | Documentación de arquitectura y por ejercicio (conforme se entrega). |
+Sistema de gestión de staff de hotel con microservicios, BFF, frontend React y agente IA con RAG. Cubre los 5 ejercicios de la prueba técnica de Toka.
 
 ---
 
-## 🏗️ Arquitectura en una línea
+## 🗺️ Arquitectura
 
-**Frontend (React + TS + shadcn/ui + Zustand)** → **BFF** → **Microservicios FastAPI** (auth, user, role, audit, ia-agent) sobre **Postgres / MongoDB / Redis / RabbitMQ / Qdrant**.
+Diagrama completo, justificación técnica (DDD + Clean Architecture), flujo de datos end-to-end, estrategia de seguridad y resiliencia: [`docs/arquitectura.md`](./docs/arquitectura.md).
 
-El detalle, el diagrama Mermaid y la justificación de cada decisión están documentados en `docs/` (Ejercicio 1).
+En una línea: **React** → **BFF (Fastify)** → **microservicios FastAPI** (auth, user, role, audit, ia-agent) sobre **Postgres / MongoDB / Redis / RabbitMQ / Qdrant**.
+
+---
+
+## 📁 Estructura del repositorio
+
+```
+hotelstaff-ia-toka-technical-test/
+├── bff/                         Node.js + Fastify + TS (API Gateway)
+├── frontend/                    Vite + React + TS + shadcn/ui + Zustand
+├── services/
+│   ├── auth/                    FastAPI + Postgres + JWT/OAuth2
+│   ├── user/                    FastAPI + Postgres + RabbitMQ publisher
+│   ├── role/                    FastAPI + Postgres (RBAC)
+│   ├── audit/                   FastAPI + MongoDB + RabbitMQ consumer
+│   └── ia-agent/                FastAPI + Qdrant + OpenAI/Gemini (RAG)
+├── libs/
+│   └── hotelstaff_shared/       Logging, config base, eventos, EventBus, JWT verifier
+├── infra/
+│   └── postgres/init/           Schemas y roles por servicio
+├── docs/                        Documentación por ejercicio
+├── docker-compose.yml           Orquestación completa
+├── Makefile                     Atajos de DX
+└── .env.example                 Plantilla de variables de entorno
+```
+
+Cada microservicio sigue Clean Architecture: `app/{domain,application,infrastructure,interfaces}`.
 
 ---
 
 ## 🚀 Cómo levantar el entorno
 
-Requisitos: Docker y Docker Compose v2.
+Requisitos: Docker y Docker Compose v2, `make`, `openssl` (para generar llaves JWT).
 
 ```bash
-# Stack completo (infra + servicios + frontend)
-docker compose up --build
-
-# Sólo infraestructura (para desarrollar un servicio localmente)
-docker compose up postgres mongodb redis rabbitmq qdrant
-
-# Ver logs de un servicio
-docker compose logs -f <servicio>
+cp .env.example .env           # ajusta OPENAI_API_KEY y contraseñas
+make keys                      # genera par RSA para firmar JWTs (./secrets/)
+make up                        # levanta infra + servicios + BFF + frontend
 ```
 
-Puertos expuestos en local:
+URLs:
 
-| Servicio | Puerto |
+| Servicio | URL |
 |---|---|
-| Frontend | 3000 |
-| Postgres | 5432 |
-| MongoDB | 27017 |
-| Redis | 6379 |
-| RabbitMQ (AMQP) | 5672 |
-| RabbitMQ (management UI) | 15672 |
-| Qdrant | 6333 |
+| Frontend | http://localhost:3000 |
+| BFF | http://localhost:8080 |
+| auth-service | http://localhost:8001 |
+| user-service | http://localhost:8002 |
+| role-service | http://localhost:8003 |
+| audit-service | http://localhost:8004 |
+| ia-agent | http://localhost:8005 |
+| RabbitMQ UI | http://localhost:15672 (guest/guest) |
+| Qdrant UI | http://localhost:6333/dashboard |
 
-Cada microservicio dispondrá de su propio `README.md` con instrucciones de desarrollo aislado, tests y linting conforme se vaya implementando.
+Otros comandos útiles:
+
+```bash
+make up-infra        # sólo postgres/mongo/redis/rabbit/qdrant
+make logs s=user-service
+make test            # tests de todos los servicios
+make test-cov        # tests + coverage report
+make clean           # down + elimina volúmenes
+```
 
 ---
 
 ## ✅ Cobertura de los 5 ejercicios
 
-El avance por ejercicio se documenta en `docs/`. El criterio para dar un ejercicio por terminado es que sea **demostrable de forma aislada** (endpoint, comando o pantalla) con evidencia ejecutable, no sólo código.
+| Ejercicio | Entregable | Estado |
+|---|---|---|
+| **E1** — Diseño y arquitectura | [`docs/arquitectura.md`](./docs/arquitectura.md) | ✅ |
+| **E2** — Microservicios | `services/auth`, `services/user`, `services/role`, `services/audit` | 🏗️ scaffold |
+| **E3** — Frontend | `frontend/` | 🏗️ scaffold |
+| **E4** — Diagnóstico | `docs/ejercicio4-diagnostico.md` | ⏳ |
+| **E5** — Agente IA | `services/ia-agent/` | 🏗️ scaffold |
+
+El criterio para dar un ejercicio por terminado: **demostrable de forma aislada** (endpoint, comando o pantalla) con evidencia ejecutable.
 
 ---
 
