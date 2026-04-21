@@ -1,0 +1,37 @@
+from __future__ import annotations
+
+import os
+
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault("LOG_FORMAT", "text")
+os.environ.setdefault("EVENTS_ENABLED", "false")
+
+import pytest
+
+from app.infrastructure.db.models import Base
+
+for table in Base.metadata.tables.values():
+    table.schema = None
+
+# SQLite FK apuntan a "roles.roles.id"; al quitar schema, ajustar.
+for t in Base.metadata.tables.values():
+    for fk in list(t.foreign_keys):
+        if fk.target_fullname.startswith("roles.roles."):
+            fk._colspec = fk.target_fullname.replace("roles.roles.", "roles.")
+
+
+@pytest.fixture()
+def client():
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    with TestClient(app) as c:
+        import asyncio
+
+        async def _setup():
+            async with app.state.engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+
+        asyncio.new_event_loop().run_until_complete(_setup())
+        yield c

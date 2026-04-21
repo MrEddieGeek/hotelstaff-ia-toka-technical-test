@@ -1,31 +1,32 @@
 # role-service
 
-Gestión de roles y permisos (RBAC) para HotelStaffIA.
+Gestión de roles (RBAC) y asignación usuario↔rol para HotelStaffIA.
 
-## Responsabilidades
-- CRUD de roles (ej. `admin`, `recepcion`, `housekeeping`, `restaurante`).
-- Asignación y revocación de roles a usuarios.
-- Publicación de eventos `role.assigned` y `role.revoked`.
-- Validación local del JWT emitido por `auth-service`.
+## Endpoints
 
-## Desarrollo local
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/roles` | Crea un rol con permisos JSON. |
+| GET | `/roles` | Lista roles. |
+| POST | `/assignments` | Asigna rol a usuario (emite `role.assigned`). |
+| DELETE | `/assignments?user_id=&role_id=` | Revoca (emite `role.revoked`). |
+| GET | `/users/{user_id}/roles` | Lista asignaciones del usuario. |
+
+## Datos
+
+- `roles.roles` (id, name UNIQUE, description, permissions JSONB, created_at)
+- `roles.user_roles` (user_id, role_id) PK compuesta; FK a roles.roles.
+
+## Eventos publicados
+
+`role.assigned` — `{user_id, role_id, role_name, permissions}`
+`role.revoked` — `{user_id, role_id, role_name}`
+
+## Comandos
 
 ```bash
-docker compose up -d postgres rabbitmq
-cd services/role
-pip install -e ".[dev]" ../../libs/hotelstaff_shared
-uvicorn app.main:app --reload --port 8000
+pytest --cov=app
+ruff check . --fix
+alembic upgrade head
+uvicorn app.main:app --reload --port 8003
 ```
-
-## Tests
-
-```bash
-pytest --cov=app --cov-report=term-missing
-```
-
-## Endpoints principales (pendientes de implementar en E2)
-
-- `GET /roles`, `POST /roles`, `DELETE /roles/{id}`
-- `POST /users/{user_id}/roles/{role_id}` (asignar)
-- `DELETE /users/{user_id}/roles/{role_id}` (revocar)
-- `GET /health/live`, `GET /health/ready`
