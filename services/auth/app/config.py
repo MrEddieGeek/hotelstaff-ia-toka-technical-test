@@ -19,11 +19,17 @@ class Settings(BaseServiceSettings):
     redis_url: str = Field(default="redis://redis:6379/0")
 
     jwt_private_key_path: str = Field(default="/run/secrets/jwt_private.pem")
+    jwt_issuer: str = Field(default="hotelstaff-auth")
+    jwt_audience: str = Field(default="hotelstaff-api")
     jwt_access_ttl_seconds: int = Field(default=900)
     jwt_refresh_ttl_seconds: int = Field(default=604800)
 
+    database_url: str | None = Field(default=None)
+
     @property
     def postgres_dsn(self) -> str:
+        if self.database_url:
+            return self.database_url
         return (
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"

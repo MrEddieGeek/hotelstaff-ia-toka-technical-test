@@ -1,44 +1,76 @@
 # auth-service
 
-Servicio de autenticación y emisión de JWT (RS256) para HotelStaffIA.
+Servicio de autenticación y emisión de JWT para HotelStaffIA.
 
 ## Responsabilidades
-- Registro y login de usuarios del sistema.
-- Emisión de **access tokens** (15 min) y **refresh tokens** (7 días).
-- Exposición del **JWKS** público para validación distribuida.
-- Publicación de eventos `auth.user_logged_in` y `auth.user_login_failed`.
 
-## Desarrollo local
+- Registro de usuarios con hashing Argon2id.
+- Login (`POST /auth/login` JSON y `POST /auth/token` OAuth2 password grant).
+- Emisión de access + refresh tokens **JWT RS256** firmados con clave privada.
+- Exposición de la clave pública vía **JWKS** (`GET /.well-known/jwks.json`) para validación distribuida.
+- Validación del access token en `GET /auth/me`.
 
-```bash
-# Desde la raíz del monorepo
-docker compose up -d postgres redis
-cd services/auth
-pip install -e ".[dev]" ../../libs/hotelstaff_shared
-uvicorn app.main:app --reload --port 8000
-```
+Única fuente de firma de tokens. El resto de servicios verifica localmente con la clave pública (cero acoplamiento en caliente con auth-service).
 
-## Tests
-
-```bash
-pytest --cov=app --cov-report=term-missing
-```
-
-## Endpoints principales
-
-- `GET /health/live` — liveness
-- `GET /health/ready` — readiness (incluye verificación de Postgres/Redis cuando se implemente)
-- `POST /auth/register` — registrar usuario
-- `POST /auth/login` — emitir par de tokens
-- `POST /auth/refresh` — renovar access token
-- `GET /.well-known/jwks.json` — claves públicas para validación
-
-## Estructura (Clean Architecture)
+## Arquitectura (DDD + Clean Architecture)
 
 ```
 app/
-├── domain/           # Entidades y reglas de negocio puras
-├── application/      # Casos de uso
-├── infrastructure/   # Persistencia, mensajería, clientes externos
-└── interfaces/       # Routers HTTP y consumers de eventos
+  domain/           # Entidades (User) + errores de dominio
+  application/      # Casos de uso (AuthService) + DTOs + Ports
+  infrastructure/   # SQLAlchemy, Argon2, RS256, adaptadores
+  interfaces/       # FastAPI: routers, dependencias, JWKS
+```
+
+Los puertos (`application/ports.py`) desacoplan el caso de uso de Postgres, Argon2 y PyJWT — fácil de testear con dobles.
+
+## Endpoints
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/auth/register` | Crea un usuario (409 si el email ya existe). |
+| POST | `/auth/login` | Login JSON → par de tokens. |
+| POST | `/auth/token` | OAuth2 password grant (form-urlencoded). |
+| POST | `/auth/refresh` | Intercambia refresh por un nuevo par. |
+| GET | `/auth/me` | Devuelve claims del access token. |
+| GET | `/.well-known/jwks.json` | Clave pública en formato JWK. |
+| GET | `/health/live` \| `/health/ready` | Liveness / readiness. |
+
+## Seguridad
+
+- **Argon2id** para contraseñas (OWASP recomendado).
+- **RS256** para JWT: sólo auth-service firma; el resto valida con JWKS.
+- Claims requeridos: `iss`, `aud`, `exp`, `iat`, `sub`, `typ` (`access`/`refresh`), `jti`.
+- Consultas parametrizadas vía SQLAlchemy (sin concatenación de SQL).
+- Correlación de requests con `X-Request-ID` propagado entre servicios.
+- Contenedor no-root (UID 10001).
+
+## Variables de entorno
+
+| Variable | Por defecto | Descripción |
+|---|---|---|
+| `DATABASE_URL` | — | Si se define, sobrescribe el DSN calculado. |
+| `POSTGRES_HOST` / `_PORT` / `_DB` / `_USER` / `_PASSWORD` | `postgres`/`5432`/`hotelstaff`/`admin`/`admin123` | Conexión. |
+| `JWT_PRIVATE_KEY_PATH` | `/run/secrets/jwt_private.pem` | En dev, si no existe, se genera una clave efímera en memoria. |
+| `JWT_ISSUER` | `hotelstaff-auth` | Claim `iss`. |
+| `JWT_AUDIENCE` | `hotelstaff-api` | Claim `aud`. |
+| `JWT_ACCESS_TTL_SECONDS` | `900` (15 min) | TTL del access token. |
+| `JWT_REFRESH_TTL_SECONDS` | `604800` (7 días) | TTL del refresh token. |
+| `LOG_LEVEL` / `LOG_FORMAT` | `INFO` / `json` | Observabilidad. |
+
+## Comandos
+
+```bash
+# Tests con cobertura
+pytest --cov=app
+
+# Lint + format
+ruff check . --fix
+ruff format .
+
+# Migración (requiere Postgres)
+alembic upgrade head
+
+# Desarrollo local
+uvicorn app.main:app --reload --port 8001
 ```
