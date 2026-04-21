@@ -12,7 +12,9 @@ import sys
 import structlog
 
 
-def configure_logging(service_name: str, level: str = "INFO", json_output: bool = True) -> None:
+def configure_logging(
+    service_name: str, level: str = "INFO", json_output: bool = True
+) -> None:
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
@@ -27,7 +29,9 @@ def configure_logging(service_name: str, level: str = "INFO", json_output: bool 
         structlog.processors.format_exc_info,
     ]
     processors.append(
-        structlog.processors.JSONRenderer() if json_output else structlog.dev.ConsoleRenderer()
+        structlog.processors.JSONRenderer()
+        if json_output
+        else structlog.dev.ConsoleRenderer()
     )
 
     structlog.configure(

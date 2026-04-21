@@ -3,7 +3,6 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-
 from hotelstaff_shared.correlation import CorrelationIdMiddleware
 from hotelstaff_shared.logging import configure_logging, get_logger
 

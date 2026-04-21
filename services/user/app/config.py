@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+from hotelstaff_shared.config import BaseServiceSettings
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
-
-from hotelstaff_shared.config import BaseServiceSettings
 
 
 class Settings(BaseServiceSettings):

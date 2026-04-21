@@ -49,7 +49,9 @@ class EventBus:
             headers={"producer": event.producer, "version": event.version},
         )
         await self._exchange.publish(message, routing_key=event.event_type)
-        log.info("event.published", event_type=event.event_type, event_id=event.event_id)
+        log.info(
+            "event.published", event_type=event.event_type, event_id=event.event_id
+        )
 
     async def consume(
         self,
@@ -73,7 +75,11 @@ class EventBus:
                     data = json.loads(message.body.decode("utf-8"))
                     event = DomainEvent.model_validate(data)
                     await handler(event)
-                    log.info("event.processed", event_type=event.event_type, event_id=event.event_id)
+                    log.info(
+                        "event.processed",
+                        event_type=event.event_type,
+                        event_id=event.event_id,
+                    )
                 except Exception as exc:  # noqa: BLE001
                     log.exception("event.failed", error=str(exc))
                     raise
