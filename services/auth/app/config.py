@@ -26,6 +26,10 @@ class Settings(BaseServiceSettings):
 
     database_url: str | None = Field(default=None)
 
+    demo_seed: bool = Field(default=False)
+    demo_email: str = Field(default="demo@hotelstaff.mx")
+    demo_password: str = Field(default="Demo1234!")
+
     @property
     def postgres_dsn(self) -> str:
         if self.database_url:

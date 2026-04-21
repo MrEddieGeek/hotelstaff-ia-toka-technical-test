@@ -45,6 +45,12 @@ async def lifespan(app: FastAPI):
     else:
         app.state.publisher = NullEventPublisher()
 
+    if settings.demo_seed:
+        from .infrastructure.seed import seed_demo_users
+
+        with contextlib.suppress(Exception):
+            await seed_demo_users(app.state.sessionmaker, app.state.publisher)
+
     log.info("service.startup", env=settings.service_env)
     yield
     if bus is not None:

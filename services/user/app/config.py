@@ -27,6 +27,8 @@ class Settings(BaseServiceSettings):
     jwt_audience: str = Field(default="hotelstaff-api")
     auth_required: bool = Field(default=False)
 
+    demo_seed: bool = Field(default=False)
+
     @property
     def postgres_dsn(self) -> str:
         if self.database_url:

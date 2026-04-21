@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import contextlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from hotelstaff_shared.correlation import CorrelationIdMiddleware
 from hotelstaff_shared.logging import configure_logging, get_logger
 
+from .application.services import AuthService
 from .config import settings
+from .domain.errors import EmailAlreadyRegistered
 from .infrastructure.db.session import build_engine, build_sessionmaker
+from .infrastructure.repositories import SqlAlchemyUserRepository
 from .infrastructure.security.jwt_service import RS256TokenService
 from .infrastructure.security.password import Argon2PasswordHasher
 from .interfaces.api.auth import router as auth_router
@@ -36,6 +40,21 @@ async def lifespan(app: FastAPI):
         access_ttl_seconds=settings.jwt_access_ttl_seconds,
         refresh_ttl_seconds=settings.jwt_refresh_ttl_seconds,
     )
+    if settings.demo_seed:
+        with contextlib.suppress(Exception):
+            async with app.state.sessionmaker() as session:
+                svc = AuthService(
+                    users=SqlAlchemyUserRepository(session),
+                    hasher=app.state.hasher,
+                    tokens=app.state.tokens,
+                )
+                try:
+                    await svc.register(settings.demo_email, settings.demo_password)
+                    await session.commit()
+                    log.info("demo.admin.seeded", email=settings.demo_email)
+                except EmailAlreadyRegistered:
+                    log.info("demo.admin.exists", email=settings.demo_email)
+
     log.info("service.startup", env=settings.service_env)
     yield
     await engine.dispose()
