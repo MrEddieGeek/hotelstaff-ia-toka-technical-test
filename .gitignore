@@ -63,3 +63,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Build artifacts
+.venv-check/
+*.tsbuildinfo
