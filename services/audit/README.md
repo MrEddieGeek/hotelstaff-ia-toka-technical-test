@@ -1,33 +1,46 @@
 # audit-service
 
-Servicio de auditoría basado en eventos para HotelStaffIA.
+Servicio de auditoría basado en eventos para HotelStaffIA. Consume todos los
+eventos de dominio (`user.*`, `auth.*`, `role.*`) desde RabbitMQ y los persiste
+en MongoDB como registro inmutable.
 
-## Responsabilidades
-- Consume eventos de dominio desde RabbitMQ (topic `hotelstaff.events`).
-- Persiste registros append-only en MongoDB con correlación por `event_id` (idempotencia).
-- Expone API de consulta con filtros temporales y por entidad.
+## Funcionamiento
 
-## Desarrollo local
-
-```bash
-docker compose up -d mongodb rabbitmq
-cd services/audit
-pip install -e ".[dev]" ../../libs/hotelstaff_shared
-uvicorn app.main:app --reload --port 8000
+```
+[user|role|auth-service] ──event──► RabbitMQ (hotelstaff.events)
+                                         │
+                                         ▼
+                                   [audit-service]
+                                         │
+                                         ▼
+                                   MongoDB → audit_logs
 ```
 
-## Tests
+El consumidor bindea la cola `audit.events` con routing keys `user.*`, `auth.*`, `role.*`. Los eventos se almacenan con índice único por `event_id` — la segunda vez que llega el mismo evento se ignora (**idempotencia**). Fallos de procesamiento van a la DLX declarada por `EventBus`.
+
+## Endpoints
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/audit?event_type=&limit=&offset=` | Consulta paginada de logs. |
+| GET | `/health/live` \| `/health/ready` | Sondas. |
+
+## Variables de entorno
+
+| Variable | Por defecto | |
+|---|---|---|
+| `MONGO_URI` | `mongodb://mongodb:27017` | |
+| `MONGO_DB` | `hotelstaff_audit` | |
+| `USE_MONGOMOCK` | `false` | `true` en tests (mongomock-motor). |
+| `RABBITMQ_URL` | `amqp://guest:guest@rabbitmq:5672/` | |
+| `EVENTS_EXCHANGE` | `hotelstaff.events` | |
+| `EVENTS_QUEUE` | `audit.events` | |
+| `CONSUMER_ENABLED` | `true` | |
+
+## Comandos
 
 ```bash
-pytest --cov=app --cov-report=term-missing
+pytest --cov=app
+ruff check . --fix
+uvicorn app.main:app --reload --port 8004
 ```
-
-## Endpoints principales (pendientes de implementar en E2)
-
-- `GET /audit?entity=user&from=...&to=...`
-- `GET /audit/{event_id}`
-- `GET /health/live`, `GET /health/ready`
-
-## Colecciones MongoDB
-
-- `events` — documentos con `event_id` (único), `event_type`, `occurred_at`, `producer`, `payload`.
