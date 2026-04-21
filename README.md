@@ -46,10 +46,14 @@ Cada microservicio sigue Clean Architecture: `app/{domain,application,infrastruc
 Requisitos: Docker y Docker Compose v2, `make`, `openssl` (para generar llaves JWT).
 
 ```bash
-cp .env.example .env           # ajusta OPENAI_API_KEY y contraseñas
+cp .env.example .env           # valores por defecto listos para demo (LLM_PROVIDER=stub, DEMO_SEED=true)
 make keys                      # genera par RSA para firmar JWTs (./secrets/)
 make up                        # levanta infra + servicios + BFF + frontend
 ```
+
+**Demo out-of-box**: el stack arranca sembrado con 4 staff de ejemplo y el agente IA responde sin API keys externas (modo `stub` con embeddings deterministas). Para usar OpenAI/Gemini reales, ajusta `LLM_PROVIDER` y las credenciales en `.env`.
+
+**Credenciales demo**: `demo@hotelstaff.mx` / `Demo1234!`
 
 URLs:
 
@@ -82,10 +86,10 @@ make clean           # down + elimina volúmenes
 | Ejercicio | Entregable | Estado |
 |---|---|---|
 | **E1** — Diseño y arquitectura | [`docs/arquitectura.md`](./docs/arquitectura.md) | ✅ |
-| **E2** — Microservicios | `services/auth`, `services/user`, `services/role`, `services/audit` | 🏗️ scaffold |
-| **E3** — Frontend | `frontend/` | 🏗️ scaffold |
-| **E4** — Diagnóstico | `docs/ejercicio4-diagnostico.md` | ⏳ |
-| **E5** — Agente IA | `services/ia-agent/` | 🏗️ scaffold |
+| **E2** — Microservicios | `services/auth`, `services/user`, `services/role`, `services/audit` + BFF, tests unitarios, logging JSON, JWT RS256 vía JWKS, RabbitMQ `user.created` | ✅ |
+| **E3** — Frontend | `frontend/` — React+TS+Zustand+TanStack Query, login, staff CRUD, roles, auditoría, agente, tema claro/oscuro | ✅ |
+| **E4** — Diagnóstico | [`docs/ejercicio4-diagnostico.md`](./docs/ejercicio4-diagnostico.md) | ✅ |
+| **E5** — Agente IA | `services/ia-agent/` con RAG sobre Qdrant, proveedor configurable (OpenAI/Gemini/stub), métricas de latencia y tokens, [`docs/prompt-engineering.md`](./docs/prompt-engineering.md) | ✅ |
 
 El criterio para dar un ejercicio por terminado: **demostrable de forma aislada** (endpoint, comando o pantalla) con evidencia ejecutable.
 
