@@ -1,23 +1,27 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
-const Home = () => (
-  <main className="min-h-screen bg-background text-foreground">
-    <div className="container flex min-h-screen flex-col items-center justify-center gap-4 py-16">
-      <h1 className="text-4xl font-semibold tracking-tight">HotelStaffIA</h1>
-      <p className="text-muted-foreground">
-        Sistema de gestión de staff con agente IA integrado.
-      </p>
-      <p className="text-sm text-muted-foreground">
-        El frontend está en scaffolding. Las pantallas se implementan en el Ejercicio 3.
-      </p>
-    </div>
-  </main>
-);
+import { Layout } from '@/components/layout';
+import { ProtectedRoute } from '@/components/protected-route';
+import { AgentPage } from '@/pages/agent';
+import { AuditPage } from '@/pages/audit';
+import { LoginPage } from '@/pages/login';
+import { RolesPage } from '@/pages/roles';
+import { StaffPage } from '@/pages/staff';
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Navigate to="/staff" replace />} />
+          <Route path="/staff" element={<StaffPage />} />
+          <Route path="/roles" element={<RolesPage />} />
+          <Route path="/audit" element={<AuditPage />} />
+          <Route path="/agent" element={<AgentPage />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

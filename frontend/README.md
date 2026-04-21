@@ -1,6 +1,6 @@
 # frontend — HotelStaffIA
 
-Interfaz de gestión construida con Vite + React + TypeScript, shadcn/ui, Tailwind CSS, Zustand y TanStack Query.
+Interfaz de gestión construida con Vite + React 18 + TypeScript, Tailwind CSS, Zustand, TanStack Query, React Hook Form + Zod y React Router v6. Todo el copy está en español.
 
 ## Desarrollo local
 
@@ -10,49 +10,45 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Asegúrate de que el BFF esté corriendo:
+Asegúrate de que el BFF esté corriendo en `http://localhost:8080` (configurable con `VITE_BFF_URL`).
+
+## Tests y build
 
 ```bash
-docker compose up -d bff
-# o, desde la raíz:
-make up
+npm test           # vitest
+npm run build      # tsc -b && vite build → dist/
 ```
 
-## Tests
+## Pantallas
 
-```bash
-npm test
-```
+| Ruta | Propósito |
+|---|---|
+| `/login` | Autenticación contra `auth-service` vía BFF. |
+| `/staff` | CRUD de staff (lista + alta + baja). |
+| `/roles` | Creación y listado de roles con permisos. |
+| `/audit` | Consulta de eventos con filtro por tipo. |
+| `/agent` | Preguntas en lenguaje natural al agente IA con visualización de fuentes RAG y latencia. |
 
-## Build
-
-```bash
-npm run build      # genera dist/ (servido por nginx en Docker)
-```
-
-## Stack
+## Arquitectura
 
 | Concern | Librería |
 |---|---|
-| State global | Zustand |
+| State global | Zustand (con persistencia del token) |
 | Server state | TanStack Query |
 | Routing | React Router v6 |
 | Formularios | React Hook Form + Zod |
-| UI | shadcn/ui + Tailwind |
-| HTTP | Axios (cliente centralizado en `src/api/`) |
+| UI | Tailwind + primitivas locales (estilo shadcn) |
+| HTTP | Axios centralizado (`src/lib/api.ts`) con inyección automática del `Authorization: Bearer` y logout en 401 |
 | Tests | Vitest + React Testing Library |
 
-## Estructura prevista (se llena en E3)
+El cliente HTTP siempre habla con el **BFF** (`/api/*`), nunca con microservicios directamente.
 
-```
-src/
-├── App.tsx
-├── main.tsx
-├── api/              # Cliente Axios + endpoints tipados
-├── components/ui/    # Componentes de shadcn
-├── features/         # Login, Users, Roles, Audit, AgentePanel
-├── hooks/
-├── lib/
-├── store/            # Stores Zustand
-└── routes/           # Configuración de rutas
-```
+## Variables de entorno
+
+| Variable | Default | Uso |
+|---|---|---|
+| `VITE_BFF_URL` | `http://localhost:8080` | Base URL del BFF. |
+
+## Dockerización
+
+`Dockerfile` multi-stage construye con Node y sirve `dist/` con nginx (`nginx.conf`), expuesto en el puerto 80 del servicio `frontend` de `docker-compose.yml`.
