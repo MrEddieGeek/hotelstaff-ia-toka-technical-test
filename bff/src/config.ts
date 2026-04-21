@@ -17,6 +17,9 @@ const schema = z.object({
   JWT_ISSUER: z.string().default('hotelstaff-auth'),
 
   REDIS_URL: z.string().default('redis://redis:6379/0'),
+
+  RATE_LIMIT_MAX: z.coerce.number().default(200),
+  RATE_LIMIT_WINDOW: z.string().default('1 minute'),
 });
 
 export const config = schema.parse(process.env);

@@ -20,6 +20,8 @@
     "@fastify/jwt": "^10.0.0",
     "@fastify/rate-limit": "^10.2.1",
     "fastify": "^5.1.0",
+    "fastify-plugin": "^5.0.1",
+    "jose": "^5.9.6",
     "pino": "^9.5.0",
     "pino-pretty": "^11.3.0",
     "zod": "^3.23.8"
