@@ -10,7 +10,7 @@ ENV VITE_BFF_URL=$VITE_BFF_URL
 RUN npm run build
 
 # nginxinc/nginx-unprivileged corre como UID 101 y escucha en 8080 (sin root)
-FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
+FROM docker.io/nginxinc/nginx-unprivileged:1.27-alpine AS runtime
 USER root
 RUN apk add --no-cache curl
 USER nginx

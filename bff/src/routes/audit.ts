@@ -8,10 +8,10 @@ export const auditRoutes: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', app.authenticate);
 
   app.get('/logs', (req, reply) =>
-    forward(req, reply, { targetBase: base, targetPath: '/audit/logs' }),
+    forward(req, reply, { targetBase: base, targetPath: '/audit' }),
   );
   app.get('/logs/:eventId', (req, reply) => {
     const { eventId } = req.params as { eventId: string };
-    return forward(req, reply, { targetBase: base, targetPath: `/audit/logs/${eventId}` });
+    return forward(req, reply, { targetBase: base, targetPath: `/audit/${eventId}` });
   });
 };

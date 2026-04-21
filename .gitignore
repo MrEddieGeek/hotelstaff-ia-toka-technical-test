@@ -67,3 +67,4 @@ Thumbs.db
 # Build artifacts
 .venv-check/
 *.tsbuildinfo
+.impeccable.md
