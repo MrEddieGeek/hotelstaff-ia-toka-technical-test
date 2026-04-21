@@ -4,36 +4,106 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 11%;
-    --primary: 222 47% 11%;
-    --primary-foreground: 210 40% 98%;
-    --radius: 0.5rem;
+    /* Brand: deep muted teal-green at ~190°. Neutrals tinted toward the same hue. */
+    --background: oklch(98.5% 0.004 190);
+    --foreground: oklch(22% 0.015 190);
+
+    --surface: oklch(100% 0.002 190);
+    --surface-foreground: oklch(22% 0.015 190);
+
+    --muted: oklch(95% 0.006 190);
+    --muted-foreground: oklch(46% 0.012 190);
+
+    --subtle: oklch(92% 0.008 190);
+    --border: oklch(89% 0.010 190);
+    --input: oklch(89% 0.010 190);
+    --ring: oklch(52% 0.085 190);
+
+    --accent: oklch(52% 0.085 190);
+    --accent-foreground: oklch(98.5% 0.004 190);
+    --accent-soft: oklch(94% 0.022 190);
+    --accent-soft-foreground: oklch(34% 0.060 190);
+
+    --destructive: oklch(54% 0.170 25);
+    --destructive-foreground: oklch(98% 0.005 25);
+    --destructive-soft: oklch(95% 0.025 25);
+    --destructive-soft-foreground: oklch(40% 0.130 25);
+
+    --success: oklch(56% 0.095 155);
+    --success-foreground: oklch(98% 0.005 155);
+    --success-soft: oklch(95% 0.030 155);
+    --success-soft-foreground: oklch(36% 0.075 155);
+
+    --info-soft: oklch(95% 0.012 220);
+    --info-soft-foreground: oklch(36% 0.060 220);
+
+    --radius: 0.375rem;
+    --radius-lg: 0.5rem;
+
+    color-scheme: light;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 212 27% 84%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
+    --background: oklch(18% 0.012 190);
+    --foreground: oklch(94% 0.006 190);
+
+    --surface: oklch(22% 0.013 190);
+    --surface-foreground: oklch(94% 0.006 190);
+
+    --muted: oklch(25% 0.014 190);
+    --muted-foreground: oklch(70% 0.014 190);
+
+    --subtle: oklch(28% 0.015 190);
+    --border: oklch(30% 0.016 190);
+    --input: oklch(30% 0.016 190);
+    --ring: oklch(72% 0.090 190);
+
+    --accent: oklch(72% 0.090 190);
+    --accent-foreground: oklch(18% 0.012 190);
+    --accent-soft: oklch(30% 0.040 190);
+    --accent-soft-foreground: oklch(85% 0.040 190);
+
+    --destructive: oklch(64% 0.170 25);
+    --destructive-foreground: oklch(15% 0.020 25);
+    --destructive-soft: oklch(30% 0.060 25);
+    --destructive-soft-foreground: oklch(85% 0.080 25);
+
+    --success: oklch(68% 0.110 155);
+    --success-foreground: oklch(15% 0.020 155);
+    --success-soft: oklch(28% 0.045 155);
+    --success-soft-foreground: oklch(82% 0.060 155);
+
+    --info-soft: oklch(28% 0.030 220);
+    --info-soft-foreground: oklch(82% 0.045 220);
+
+    color-scheme: dark;
   }
 
   * {
-    @apply border-border;
+    border-color: var(--border);
+  }
+
+  html {
+    background-color: var(--background);
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family:
+      'Hanken Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-feature-settings: 'cv11', 'ss01', 'ss02';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--accent-soft);
+    color: var(--accent-soft-foreground);
+  }
+
+  :focus-visible {
+    outline: none;
   }
 }

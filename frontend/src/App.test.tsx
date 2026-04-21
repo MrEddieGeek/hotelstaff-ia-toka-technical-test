@@ -25,7 +25,7 @@ describe('App', () => {
 
   it('redirige a /login cuando no hay sesión', () => {
     renderApp('/staff');
-    expect(screen.getByRole('heading', { name: /HotelStaffIA/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /inicia sesión/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/correo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
   });

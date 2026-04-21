@@ -2,7 +2,16 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
 import { api, extractApiError } from '@/lib/api';
-import { Alert, Button, Card, Input, Label, Spinner } from '@/components/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Label,
+  SectionHeader,
+  Spinner,
+  Surface,
+  Textarea,
+} from '@/components/ui';
 
 interface Source {
   doc_id: string;
@@ -15,6 +24,9 @@ interface AskResponse {
   answer: string;
   sources: Source[];
 }
+
+const formatLatency = (ms: number) =>
+  ms >= 1000 ? `${(ms / 1000).toFixed(2)} s` : `${ms} ms`;
 
 export const AgentPage = () => {
   const [question, setQuestion] = useState('');
@@ -34,76 +46,135 @@ export const AgentPage = () => {
     onSuccess: (data) => setResponse(data),
   });
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-900">Agente IA</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Pregunta en lenguaje natural sobre el staff del hotel. Las respuestas se construyen con
-          RAG sobre la base vectorial indexada desde los eventos <code>user.created</code>.
-        </p>
-      </div>
+  const submit = () => {
+    if (!question.trim() || ask.isPending) return;
+    setResponse(null);
+    ask.mutate();
+  };
 
-      <Card>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (question.trim()) {
-              setResponse(null);
-              ask.mutate();
-            }
-          }}
-          className="space-y-4"
-        >
-          <div>
-            <Label htmlFor="question">Pregunta</Label>
-            <Input
-              id="question"
-              placeholder="¿Quiénes son los recepcionistas del turno matutino?"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              required
-            />
+  return (
+    <div className="space-y-10">
+      <SectionHeader eyebrow="RAG" title="Agente">
+        Pregunta en lenguaje natural sobre el staff. La respuesta se construye
+        recuperando fragmentos de la base vectorial.
+      </SectionHeader>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+        className="space-y-3"
+      >
+        <Label htmlFor="question">Tu pregunta</Label>
+        <div className="relative">
+          <Textarea
+            id="question"
+            rows={3}
+            placeholder="¿Quiénes son los recepcionistas del turno matutino?"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submit();
+            }}
+            required
+            className="pr-32"
+          />
+          <div className="absolute bottom-2.5 right-2.5">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={ask.isPending || !question.trim()}
+            >
+              {ask.isPending ? <Spinner /> : 'Preguntar'}
+            </Button>
           </div>
-          <Button type="submit" disabled={ask.isPending || !question.trim()}>
-            {ask.isPending ? <Spinner /> : 'Preguntar'}
-          </Button>
-        </form>
-      </Card>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          ⌘/Ctrl + Enter para enviar.
+        </p>
+      </form>
 
       {ask.isError && <Alert kind="error">{extractApiError(ask.error)}</Alert>}
 
-      {response && (
-        <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">Respuesta</h3>
-            {latencyMs !== null && (
-              <span className="text-xs text-slate-500">{latencyMs} ms</span>
-            )}
+      {ask.isPending && (
+        <Surface className="p-6">
+          <p className="text-sm text-muted-foreground">
+            Recuperando fragmentos relevantes y redactando respuesta…
+          </p>
+          <div className="mt-4 space-y-2">
+            <div className="h-3 w-11/12 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-9/12 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-7/12 animate-pulse rounded bg-muted" />
           </div>
-          <p className="whitespace-pre-wrap text-slate-800">{response.answer}</p>
+        </Surface>
+      )}
 
-          {response.sources.length > 0 && (
-            <>
-              <h4 className="mt-6 mb-2 text-sm font-semibold text-slate-700">
-                Fuentes recuperadas
-              </h4>
-              <ul className="space-y-2">
-                {response.sources.map((s) => (
-                  <li key={s.doc_id} className="rounded border border-slate-200 p-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs text-slate-500">{s.doc_id}</span>
-                      <span className="text-xs text-slate-500">
-                        score {s.score.toFixed(3)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-slate-700">{s.text}</p>
+      {response && (
+        <article className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
+          <Surface className="p-6 lg:p-8">
+            <header className="flex items-baseline justify-between gap-4 border-b border-border pb-4">
+              <h3 className="font-display text-xl font-medium text-foreground">
+                Respuesta
+              </h3>
+              {latencyMs !== null && (
+                <p className="text-2xs uppercase tracking-wider text-muted-foreground">
+                  Generada en{' '}
+                  <span className="font-mono text-foreground">
+                    {formatLatency(latencyMs)}
+                  </span>{' '}
+                  · {response.sources.length} fuentes
+                </p>
+              )}
+            </header>
+            <p className="mt-5 whitespace-pre-wrap text-base leading-relaxed text-foreground">
+              {response.answer}
+            </p>
+          </Surface>
+
+          <aside aria-labelledby="fuentes" className="space-y-3">
+            <h4
+              id="fuentes"
+              className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              Fuentes recuperadas
+            </h4>
+            {response.sources.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Sin coincidencias en el índice.
+              </p>
+            ) : (
+              <ol className="space-y-2.5">
+                {response.sources.map((s, i) => (
+                  <li key={s.doc_id}>
+                    <Surface className="p-3.5">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="font-mono text-2xs text-muted-foreground">
+                          {String(i + 1).padStart(2, '0')} · {s.doc_id}
+                        </span>
+                        <Badge tone="accent">{s.score.toFixed(3)}</Badge>
+                      </div>
+                      <p className="mt-2 line-clamp-3 text-xs text-muted-foreground">
+                        {s.text}
+                      </p>
+                    </Surface>
                   </li>
                 ))}
-              </ul>
-            </>
-          )}
-        </Card>
+              </ol>
+            )}
+          </aside>
+        </article>
+      )}
+
+      {!ask.isPending && !response && !ask.isError && (
+        <Surface className="p-8">
+          <p className="font-display text-lg text-foreground">Pregunta para empezar</p>
+          <p className="mt-1 max-w-md text-sm text-muted-foreground">
+            El agente responde sobre el staff indexado desde los eventos{' '}
+            <code className="font-mono text-foreground">user.created</code>.
+            Empieza con algo como “lista de chefs” o “staff del departamento de A&amp;B”.
+          </p>
+        </Surface>
       )}
     </div>
   );
