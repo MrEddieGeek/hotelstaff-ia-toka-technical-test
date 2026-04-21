@@ -1,30 +1,44 @@
 # user-service
 
-Servicio de gestión de usuarios del sistema HotelStaffIA.
+Servicio de gestión de usuarios (staff de hotel) de HotelStaffIA.
 
 ## Responsabilidades
-- CRUD de usuarios (perfil, contacto, hotel asignado, fecha de alta).
-- Publicación de eventos de dominio: `user.created`, `user.updated`, `user.deleted`.
-- Validación local del JWT emitido por `auth-service` (JWKS).
 
-## Desarrollo local
+- CRUD de usuarios (`/users`): crear, listar con paginación, obtener, actualizar, borrar.
+- Publica eventos de dominio a RabbitMQ: `user.created`, `user.updated`, `user.deleted`.
+- Validación de JWT opcional (habilitable con `AUTH_REQUIRED=true` y `JWT_PUBLIC_KEY_PATH`).
+
+## Arquitectura
+
+DDD + Clean Architecture (`domain/application/infrastructure/interfaces`). El puerto `EventPublisher` se resuelve a `RabbitMQPublisher` en producción o `NullEventPublisher` en tests / cuando RabbitMQ no está disponible (degradación elegante).
+
+## Endpoints
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/users` | Crea usuario (emite `user.created`). |
+| GET | `/users?limit=&offset=` | Lista paginada. |
+| GET | `/users/{id}` | Detalle. |
+| PATCH | `/users/{id}` | Parche parcial (emite `user.updated`). |
+| DELETE | `/users/{id}` | Baja (emite `user.deleted`). |
+| GET | `/health/live` \| `/health/ready` | Sondas. |
+
+## Variables de entorno
+
+| Variable | Por defecto | |
+|---|---|---|
+| `DATABASE_URL` / `POSTGRES_*` | — | Conexión Postgres. |
+| `RABBITMQ_URL` | `amqp://guest:guest@rabbitmq:5672/` | Broker. |
+| `EVENTS_EXCHANGE` | `hotelstaff.events` | Exchange topic. |
+| `EVENTS_ENABLED` | `true` | Apágalo para tests locales. |
+| `JWT_PUBLIC_KEY_PATH` | — | Para validar tokens del auth-service. |
+| `AUTH_REQUIRED` | `false` | Activa el guard JWT en endpoints mutantes. |
+
+## Comandos
 
 ```bash
-docker compose up -d postgres rabbitmq
-cd services/user
-pip install -e ".[dev]" ../../libs/hotelstaff_shared
-uvicorn app.main:app --reload --port 8000
+pytest --cov=app
+ruff check . --fix
+alembic upgrade head
+uvicorn app.main:app --reload --port 8002
 ```
-
-## Tests
-
-```bash
-pytest --cov=app --cov-report=term-missing
-```
-
-## Endpoints principales (pendientes de implementar en E2)
-
-- `GET /users`, `GET /users/{id}`
-- `POST /users`
-- `PATCH /users/{id}`, `DELETE /users/{id}`
-- `GET /health/live`, `GET /health/ready`

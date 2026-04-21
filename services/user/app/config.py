@@ -16,8 +16,21 @@ class Settings(BaseServiceSettings):
     postgres_user: str = Field(default="admin")
     postgres_password: str = Field(default="admin123")
 
+    database_url: str | None = Field(default=None)
+
+    rabbitmq_url: str = Field(default="amqp://guest:guest@rabbitmq:5672/")
+    events_exchange: str = Field(default="hotelstaff.events")
+    events_enabled: bool = Field(default=True)
+
+    jwt_public_key_path: str | None = Field(default=None)
+    jwt_issuer: str = Field(default="hotelstaff-auth")
+    jwt_audience: str = Field(default="hotelstaff-api")
+    auth_required: bool = Field(default=False)
+
     @property
     def postgres_dsn(self) -> str:
+        if self.database_url:
+            return self.database_url
         return (
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
